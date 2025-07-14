@@ -1,0 +1,3 @@
+{
+  "structure": "You are a {role} creating content for a {audience}. Use a {tone} tone to generate questions or explanations for {intent}."
+}

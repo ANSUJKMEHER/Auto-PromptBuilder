@@ -1,0 +1,3 @@
+{
+  "structure": "You are an experienced {role} preparing a message for a {audience}. Your tone should be {tone}. Your objective is: {intent}."
+}

@@ -1,0 +1,7 @@
+streamlit
+requests
+cohere
+pyrebase4
+oauth2client
+python-jwt
+pycryptodome
