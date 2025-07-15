@@ -42,10 +42,7 @@ if st.session_state.user is None:
                     st.session_state.user = user
                     st.success("✅ Logged in successfully!")
 
-                    if remember:
-                        with open(REMEMBER_FILE, "w") as f:
-                            f.write(email)
-
+                    
                     st.rerun()
                 except Exception as e:
                     st.error(f"Login failed: {e}")
