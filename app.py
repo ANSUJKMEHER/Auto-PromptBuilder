@@ -31,7 +31,7 @@ if st.session_state.user is None:
     with tab1:
         email = st.text_input("Email")
         password = st.text_input("Password", type="password")
-        remember = st.checkbox("Remember Me (for this device only)")
+        
 
         if st.button("Login"):
             if not email or not password:
