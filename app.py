@@ -187,9 +187,10 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
                     "feedback": None,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 },
-                user_id = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
+                uid = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
 
             )
+            
 
     # Show AI Response
     if st.session_state.get("last_response"):
@@ -383,7 +384,6 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             )
             st.session_state.chaining_feedback_submitted = True
             time.sleep(1.5)
-            st.session_state.chaining_feedback_submitted = False
             st.rerun()
 
     # 🧹 Clear Prompt Chaining Section Button
@@ -504,3 +504,7 @@ if st.session_state.show_history:
     # 🔍 No History Case
     if not st.session_state.prompt_logs and not st.session_state.chain_logs:
         st.info("No history found.")
+
+
+
+
