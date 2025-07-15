@@ -11,17 +11,17 @@ from firebase_auth import signup, login, log_prompt_to_firebase, db
 st.set_page_config(page_title="AutoPrompt Builder")
 st.title("🧠 AutoPrompt Builder")
 
-# # 🔐 Login Section
-# REMEMBER_FILE = "remembered_user.txt"
+# 🔐 Login Section
+REMEMBER_FILE = "remembered_user.txt"
 
-# # Auto-login if remembered email exists
+# Auto-login if remembered email exists
 if "user" not in st.session_state:
     st.session_state.user = None
-    # if os.path.exists(REMEMBER_FILE):
-    #     with open(REMEMBER_FILE, "r") as f:
-    #         remembered_email = f.read().strip()
-    #         if remembered_email:
-    #             st.session_state.user = {"email": remembered_email}
+    if os.path.exists(REMEMBER_FILE):
+        with open(REMEMBER_FILE, "r") as f:
+            remembered_email = f.read().strip()
+            if remembered_email:
+                st.session_state.user = {"email": remembered_email}
 
 # If still not logged in, show login form
 if st.session_state.user is None:
@@ -31,7 +31,7 @@ if st.session_state.user is None:
     with tab1:
         email = st.text_input("Email")
         password = st.text_input("Password", type="password")
-        
+        remember = st.checkbox("Remember Me (for this device only)")
 
         if st.button("Login"):
             if not email or not password:
@@ -42,7 +42,10 @@ if st.session_state.user is None:
                     st.session_state.user = user
                     st.success("✅ Logged in successfully!")
 
-                    
+                    if remember:
+                        with open(REMEMBER_FILE, "w") as f:
+                            f.write(email)
+
                     st.rerun()
                 except Exception as e:
                     st.error(f"Login failed: {e}")
@@ -184,7 +187,7 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
                     "feedback": None,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 },
-                uid = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
+                uid = st.session_state.user["email"].replace(".", "_")
 
             )
             
@@ -245,12 +248,12 @@ Intent: {intent}
         st.rerun()
 # 🔗 Prompt chaining section
 
+
 st.markdown("---")
 st.title("🔗 Prompt Chaining")
 
 with st.expander("🔗 Prompt Chaining", expanded=False):
-
-    # ✅ Clear Chaining if triggered
+    # ✅ Clear Chaining
     if st.session_state.get("clear_chaining", False):
         for i in range(len(st.session_state.get("chaining_steps", []))):
             step_key = f"chaining_step_{i}"
@@ -293,7 +296,7 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
                 st.session_state.chaining_steps.pop()
                 st.rerun()
 
-    # 📝 Initial input for first step
+    # 📝 Initial input
     initial_input = st.text_area(
         "📝 Initial Input",
         value=st.session_state.get("initial_input", ""),
@@ -301,8 +304,8 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
         height=100
     )
 
-    # ⚙️ Temperature and Tokens
-    st.markdown("### ⚙️ Generation Parameters (for all chaining steps)")
+    # ⚙️ Parameters
+    st.markdown("### ⚙️ Generation Parameters")
     temperature = st.slider("Temperature", 0.0, 1.0, 0.7, step=0.05, key="chaining_temp")
     max_tokens = st.number_input("Max Tokens", 10, 1000, 300, key="chaining_tokens")
 
@@ -313,10 +316,34 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
         if not initial_input.strip() or any(not step.strip() for step in steps):
             st.warning("⚠️ Please fill in the initial input and all chaining steps before running.")
         else:
-            st.session_state["chain_outputs"] = run_chaining(steps, initial_input, temperature, max_tokens)
-            st.session_state["chaining_feedback_submitted"] = False  # Reset feedback state
+            all_outputs = run_chaining(steps, initial_input, temperature, max_tokens)
+            st.session_state["chain_outputs"] = all_outputs
+            st.session_state["chaining_feedback_submitted"] = False
 
-    # ✅ Show Chained Output if available
+            # ✅ Build chain_steps
+            chain_steps = [
+                {"step": step, "prompt": prompt, "response": result}
+                for step, prompt, result in all_outputs
+            ]
+
+            # ✅ Log immediately to Firebase
+            log_prompt_to_firebase(
+                email=st.session_state.user["email"],
+                prompt=initial_input,
+                response="--chained--",
+                meta={
+                    "role": role,
+                    "audience": audience,
+                    "tone": tone,
+                    "intent": intent,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens
+                },
+                chain_steps=chain_steps,
+                uid=st.session_state.user["email"].replace(".", "_")
+            )
+
+    # ✅ Show Chained Output
     if st.session_state.get("chain_outputs"):
         all_outputs = st.session_state["chain_outputs"]
 
@@ -328,7 +355,7 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
                 st.markdown("🧠 Output:")
                 st.write(result)
 
-        # 📤 Export Chaining Result
+        # 📤 Export
         st.markdown("### 📤 Export Chaining Result")
         export_chain_format = st.radio("Choose export format:", ["TXT", "JSON"], horizontal=True, key="chain_export_format")
 
@@ -351,18 +378,15 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             json_export = json.dumps(chain_export, indent=2)
             st.download_button("⬇️ Download .json file", data=json_export, file_name="chained_output.json", mime="application/json")
 
-        # 📊 Rate the Chaining Result
+        # 📊 Feedback
         st.markdown("### 📊 Rate the Chaining Response")
-        rating = st.slider("⭐ Rate this output (1 = poor, 5 = excellent)", 1, 5, value=st.session_state.get("chain_rating", 3), key="chain_rating")
-        feedback = st.text_area("💬 Optional: Feedback on chaining output", value=st.session_state.get("chain_feedback", ""), key="chain_feedback")
+        rating = st.slider("⭐ Rate this output", 1, 5, value=st.session_state.get("chain_rating", 3), key="chain_rating")
+        feedback = st.text_area("💬 Feedback on chaining output", value=st.session_state.get("chain_feedback", ""), key="chain_feedback")
 
-        # ✅ Show success message if submitted
         if st.session_state.get("chaining_feedback_submitted"):
-            st.success("✅ Thank you! Your chaining feedback has been submitted.")
+            st.success("✅ Thank you! Your feedback has been submitted.")
 
-        # ✅ Submit feedback
         if st.button("✅ Submit Chaining Feedback"):
-            user_id = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
             log_prompt_to_firebase(
                 email=st.session_state.user["email"],
                 prompt=initial_input,
@@ -383,7 +407,7 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             time.sleep(1.5)
             st.rerun()
 
-    # 🧹 Clear Prompt Chaining Section Button
+    # 🧹 Clear Button
     if st.button("🧹 Clear Chaining"):
         st.session_state.clear_chaining = True
         st.rerun()
