@@ -11,17 +11,17 @@ from firebase_auth import signup, login, log_prompt_to_firebase, db
 st.set_page_config(page_title="AutoPrompt Builder")
 st.title("🧠 AutoPrompt Builder")
 
-# 🔐 Login Section
-REMEMBER_FILE = "remembered_user.txt"
+# # 🔐 Login Section
+# REMEMBER_FILE = "remembered_user.txt"
 
-# Auto-login if remembered email exists
+# # Auto-login if remembered email exists
 if "user" not in st.session_state:
     st.session_state.user = None
-    if os.path.exists(REMEMBER_FILE):
-        with open(REMEMBER_FILE, "r") as f:
-            remembered_email = f.read().strip()
-            if remembered_email:
-                st.session_state.user = {"email": remembered_email}
+    # if os.path.exists(REMEMBER_FILE):
+    #     with open(REMEMBER_FILE, "r") as f:
+    #         remembered_email = f.read().strip()
+    #         if remembered_email:
+    #             st.session_state.user = {"email": remembered_email}
 
 # If still not logged in, show login form
 if st.session_state.user is None:
