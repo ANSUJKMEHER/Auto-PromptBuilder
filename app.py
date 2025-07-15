@@ -321,23 +321,28 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             st.session_state["chaining_feedback_submitted"] = False
 
             # ✅ Build chain_steps
-            chain_steps = [
-                {"step": step, "prompt": prompt, "response": result}
-                for step, prompt, result in all_outputs
-            ]
+            chain_steps = []
+            for idx, (step, prompt, result) in enumerate(all_outputs):
+                chain_steps.append({
+        "step": step or f"Step {idx+1}",
+        "prompt": prompt or "",
+        "response": result or ""
+    })
+
 
             # ✅ Log immediately to Firebase
             log_prompt_to_firebase(
                 email=st.session_state.user["email"],
                 prompt=initial_input,
-                response="--chained--",
+                response=all_outputs[-1][2],
                 meta={
                     "role": role,
                     "audience": audience,
                     "tone": tone,
                     "intent": intent,
                     "temperature": temperature,
-                    "max_tokens": max_tokens
+                    "max_tokens": max_tokens,
+                    "timestamp":datetime.now().isoformat()
                 },
                 chain_steps=chain_steps,
                 uid=st.session_state.user["email"].replace(".", "_")
@@ -387,25 +392,19 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             st.success("✅ Thank you! Your feedback has been submitted.")
 
         if st.button("✅ Submit Chaining Feedback"):
-            log_prompt_to_firebase(
-                email=st.session_state.user["email"],
-                prompt=initial_input,
-                response="--chained--",
-                meta={
-                    "role": role,
-                    "audience": audience,
-                    "tone": tone,
-                    "intent": intent,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "rating": rating,
-                    "feedback": feedback,
-                },
-                chain_steps=chain_steps
-            )
-            st.session_state.chaining_feedback_submitted = True
-            time.sleep(1.5)
-            st.rerun()
+            from firebase_auth import update_feedback_in_firebase
+
+            user_id = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
+            timestamp_to_match = st.session_state["chain_outputs"][0][-1]  # Last entry's timestamp
+            log_key = st.session_state.chain_keys.get(timestamp_to_match)
+            if log_key:
+                update_feedback_in_firebase(user_id, log_key, rating=rating, feedback=feedback)
+                st.success("✅ Feedback submitted.")
+            else:
+                st.error("Could not find matching chaining log to update.")
+                st.session_state.chaining_feedback_submitted = True
+                time.sleep(1.5)
+                st.rerun()
 
     # 🧹 Clear Button
     if st.button("🧹 Clear Chaining"):

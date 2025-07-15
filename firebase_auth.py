@@ -46,3 +46,11 @@ def log_prompt_to_firebase(email, prompt, response, meta, chain_steps=None, uid=
 
     # Push to Realtime Database under logs/<user_id>
     db.child("logs").child(user_id).push(data)
+
+def update_feedback_in_firebase(user_id, log_key, rating=None, feedback=None):
+    updates = {}
+    if rating is not None:
+        updates["rating"] = rating
+    if feedback is not None:
+        updates["feedback"] = feedback
+    db.child("logs").child(user_id).child(log_key).update(updates)
