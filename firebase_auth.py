@@ -1,6 +1,7 @@
 import pyrebase
 from firebase_config import firebase_config
 from datetime import datetime
+import traceback
 
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
@@ -16,41 +17,50 @@ def login(email, password):
     return {"email": email, "uid": uid}
 
 def log_prompt_to_firebase(email, prompt, response, meta, chain_steps=None, uid=None):
-    user_id = uid if uid else email.replace(".", "_")
+    try:
+        user_id = uid if uid else email.replace(".", "_")
 
+        # Timestamp
+        timestamp = meta.get("timestamp") or datetime.now().isoformat()
 
-    # Base data payload
-    data = {
-        "prompt":       prompt,
-        "response":     response,
-        "timestamp":    datetime.now().isoformat(),
-        # pull through any core meta fields
-        "role":         meta.get("role"),
-        "audience":     meta.get("audience"),
-        "tone":         meta.get("tone"),
-        "intent":       meta.get("intent"),
-        "temperature":  meta.get("temperature"),
-        "max_tokens":   meta.get("max_tokens"),
-    }
+        # Construct data
+        data = {
+            "email":        email,
+            "prompt":       prompt,
+            "response":     response,
+            "timestamp":    timestamp,
+            "role":         meta.get("role"),
+            "audience":     meta.get("audience"),
+            "tone":         meta.get("tone"),
+            "intent":       meta.get("intent"),
+            "temperature":  meta.get("temperature"),
+            "max_tokens":   meta.get("max_tokens"),
+        }
 
-    # Include rating/feedback if provided
-    if "rating" in meta:
-        data["rating"]   = meta.get("rating")
-    if "feedback" in meta:
-        data["feedback"] = meta.get("feedback")
+        if meta.get("rating") is not None:
+            data["rating"] = meta["rating"]
+        if meta.get("feedback"):
+            data["feedback"] = meta["feedback"]
+        if chain_steps:
+            data["chain"] = chain_steps
 
-    # Include chaining steps if provided
-    if chain_steps:
-        # chain_steps should be a list of dicts: [{"step":..., "prompt":..., "response":...}, ...]
-        data["chain"] = chain_steps
+        # 🔐 Push and get the log key
+        result = db.child("logs").child(user_id).push(data)
+        return result["name"], timestamp  # 🔁 Return Firebase key and timestamp
 
-    # Push to Realtime Database under logs/<user_id>
-    db.child("logs").child(user_id).push(data)
+    except Exception as e:
+        print("[Firebase Log Error]", e)
+        traceback.print_exc()
+        return None, None  # ❌ Failed
 
 def update_feedback_in_firebase(user_id, log_key, rating=None, feedback=None):
-    updates = {}
-    if rating is not None:
-        updates["rating"] = rating
-    if feedback is not None:
-        updates["feedback"] = feedback
-    db.child("logs").child(user_id).child(log_key).update(updates)
+    try:
+        updates = {}
+        if rating is not None:
+            updates["rating"] = rating
+        if feedback:
+            updates["feedback"] = feedback
+        db.child("logs").child(user_id).child(log_key).update(updates)
+    except Exception as e:
+        print(f"[Firebase Feedback Update Error]: {e}")
+        traceback.print_exc()

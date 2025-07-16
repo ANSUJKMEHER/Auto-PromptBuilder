@@ -247,8 +247,6 @@ Intent: {intent}
         st.session_state.clear_prompt = True
         st.rerun()
 # 🔗 Prompt chaining section
-
-
 st.markdown("---")
 st.title("🔗 Prompt Chaining")
 
@@ -307,7 +305,7 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
     # ⚙️ Parameters
     st.markdown("### ⚙️ Generation Parameters")
     temperature = st.slider("Temperature", 0.0, 1.0, 0.7, step=0.05, key="chaining_temp")
-    max_tokens = st.number_input("Max Tokens", 10, 1000, 300, key="chaining_tokens")
+    max_tokens = st.number_input("Max Tokens", 10, 2048, 1500, key="chaining_tokens")
 
     # ▶️ Run chaining
     if st.button("▶️ Run Chaining", key="run_chain_button"):
@@ -323,30 +321,31 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             # ✅ Build chain_steps
             chain_steps = []
             for idx, (step, prompt, result) in enumerate(all_outputs):
+                print(f"\n🔹 [FULL RESPONSE for Step {idx+1}]:\n{result}")
+                print(f"🧾 [RESPONSE LENGTH for Step {idx+1}]: {len(result)}\n")
+
                 chain_steps.append({
-        "step": step or f"Step {idx+1}",
-        "prompt": prompt or "",
-        "response": result or ""
-    })
+                    "step": step or f"Step {idx+1}",
+                    "prompt": prompt or "",
+                    "response": result or ""
+                })
 
-
-            # ✅ Log immediately to Firebase
-            log_prompt_to_firebase(
+            # ✅ Log immediately to Firebase and capture key/timestamp
+            log_key, log_timestamp = log_prompt_to_firebase(
                 email=st.session_state.user["email"],
                 prompt=initial_input,
                 response=all_outputs[-1][2],
                 meta={
-                    "role": role,
-                    "audience": audience,
-                    "tone": tone,
-                    "intent": intent,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
-                    "timestamp":datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat()
                 },
                 chain_steps=chain_steps,
                 uid=st.session_state.user["email"].replace(".", "_")
             )
+
+            if log_key:
+                st.session_state.chain_keys[log_timestamp] = log_key
 
     # ✅ Show Chained Output
     if st.session_state.get("chain_outputs"):
@@ -358,7 +357,9 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
                 st.markdown("🧾 Prompt:")
                 st.code(prompt, language="markdown")
                 st.markdown("🧠 Output:")
-                st.write(result)
+                st.text_area("Output", value=result, height=400, key=f"output_step_{idx}")
+
+
 
         # 📤 Export
         st.markdown("### 📤 Export Chaining Result")
@@ -395,7 +396,7 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             from firebase_auth import update_feedback_in_firebase
 
             user_id = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
-            timestamp_to_match = st.session_state["chain_outputs"][0][-1]  # Last entry's timestamp
+            timestamp_to_match = st.session_state["chain_outputs"][0][-1]  # Last response in output
             log_key = st.session_state.chain_keys.get(timestamp_to_match)
             if log_key:
                 update_feedback_in_firebase(user_id, log_key, rating=rating, feedback=feedback)

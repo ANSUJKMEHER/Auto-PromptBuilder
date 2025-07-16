@@ -9,7 +9,8 @@ def generate_prompt(prompt_text, temperature=0.7, max_tokens=300):
             message=prompt_text,
             temperature=temperature,
             max_tokens=max_tokens,
-            model="command-r-plus"
+            model="command-r-plus",
+            stop_sequences=[]
         )
         return response.text
     except Exception as e:
