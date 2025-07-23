@@ -7,6 +7,7 @@ from template_manager import load_templates
 from prompt_engine import generate_prompt
 from chaining import run_chaining
 from firebase_auth import signup, login, log_prompt_to_firebase, db
+from firebase_auth import update_feedback_in_firebase
 
 st.set_page_config(page_title="AutoPrompt Builder")
 st.title("🧠 AutoPrompt Builder")
@@ -47,8 +48,11 @@ if st.session_state.user is None:
                             f.write(email)
 
                     st.rerun()
-                except Exception as e:
-                    st.error(f"Login failed: {e}")
+                except ValueError as ve:
+                    st.error(str(ve))  # shows: "Wrong email or password."
+                except Exception:
+                    st.error("Login failed due to an unexpected error. Please try again.")
+
 
     with tab2:
         email_signup = st.text_input("New Email")
@@ -61,8 +65,11 @@ if st.session_state.user is None:
                 try:
                     signup(email_signup, pass_signup)
                     st.success("✅ Account created. You can now log in.")
-                except Exception as e:
-                    st.error(f"Signup failed: {e}")
+                except ValueError as ve:
+                    st.error(str(ve))  # shows: "Email already registered" or "Weak password"
+                except Exception:
+                    st.error("Signup failed due to an unexpected error. Please try again.")
+
 
     st.stop()
 
@@ -123,13 +130,17 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
         st.session_state["intent"] = ""
         st.session_state["last_response"] = ""
         st.session_state["full_prompt"] = ""
+        st.session_state["example_count"] = 0
 
+        if "example_count" in st.session_state:
+            del st.session_state["example_count"]
         # Clear few-shot examples
         for key in list(st.session_state.keys()):
             if key.startswith("ex_input_") or key.startswith("ex_output_"):
                 del st.session_state[key]
 
         st.session_state["clear_prompt"] = False
+        st.rerun()
 
     # Prompt Input Section
     role = st.text_input("Enter Role (e.g., HR, Lawyer)", key="role")
@@ -139,8 +150,14 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
 
     # Few-Shot Examples
     st.markdown("### 🧠 Optional: Few-Shot Examples")
-    example_count = st.number_input("How many examples?", min_value=0, max_value=5, value=0)
-
+    if "example_count" not in st.session_state:
+        st.session_state["example_count"] = 0
+    example_count = st.number_input(
+    "How many examples?", min_value=0, max_value=5,
+    value=st.session_state.get("example_count", 0),
+    key="example_count"
+    )
+   
     few_shot_examples = []
     for i in range(example_count):
         input_example = st.text_area(f"Example {i+1} - Input", key=f"ex_input_{i}")
@@ -172,7 +189,7 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
             st.session_state["last_response"] = result
 
             # Log to Firebase
-            log_prompt_to_firebase(
+            log_key,log_timestamp=log_prompt_to_firebase(
                 email=st.session_state.user["email"],
                 prompt=full_prompt,
                 response=result,
@@ -190,7 +207,8 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
                 uid = st.session_state.user["email"].replace(".", "_")
 
             )
-            
+            st.session_state["prompt_log_key"] = log_key
+            st.session_state["prompt_log_uid"] = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
 
     # Show AI Response
     if st.session_state.get("last_response"):
@@ -241,6 +259,15 @@ Intent: {intent}
             if feedback:
                 st.markdown("📝 Your feedback:")
                 st.write(feedback)
+            if "prompt_log_key" in st.session_state and "prompt_log_uid" in st.session_state:
+                update_feedback_in_firebase(
+            st.session_state["prompt_log_uid"],
+            st.session_state["prompt_log_key"],
+            rating=rating,
+            feedback=feedback
+        )
+            else:
+                st.warning("⚠️ Could not update feedback: log key missing.")
 
     # Clear Inputs
     if st.button("🧹 Clear Prompt Input & Output"):
@@ -346,6 +373,8 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
 
             if log_key:
                 st.session_state.chain_keys[log_timestamp] = log_key
+                st.session_state["chain_log_key"] = log_key
+                st.session_state["chain_log_uid"] = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
 
     # ✅ Show Chained Output
     if st.session_state.get("chain_outputs"):
@@ -393,14 +422,15 @@ with st.expander("🔗 Prompt Chaining", expanded=False):
             st.success("✅ Thank you! Your feedback has been submitted.")
 
         if st.button("✅ Submit Chaining Feedback"):
-            from firebase_auth import update_feedback_in_firebase
-
-            user_id = st.session_state.user.get("uid") or st.session_state.user["email"].replace(".", "_")
-            timestamp_to_match = st.session_state["chain_outputs"][0][-1]  # Last response in output
-            log_key = st.session_state.chain_keys.get(timestamp_to_match)
-            if log_key:
-                update_feedback_in_firebase(user_id, log_key, rating=rating, feedback=feedback)
+            if "chain_log_key" in st.session_state and "chain_log_uid" in st.session_state:
+                update_feedback_in_firebase(
+                    st.session_state["chain_log_uid"],
+                    st.session_state["chain_log_key"],
+                    rating=rating,
+                    feedback=feedback
+                )
                 st.success("✅ Feedback submitted.")
+                st.session_state["chaining_feedback_submitted"] = True
             else:
                 st.error("Could not find matching chaining log to update.")
                 st.session_state.chaining_feedback_submitted = True

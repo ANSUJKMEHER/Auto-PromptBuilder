@@ -8,13 +8,34 @@ auth = firebase.auth()
 db = firebase.database()
 
 def signup(email, password):
-    return auth.create_user_with_email_and_password(email, password)
+    try:
+        return auth.create_user_with_email_and_password(email, password)
+    except Exception as e:
+        try:
+            error_msg = e.args[1]
+            if "EMAIL_EXISTS" in error_msg:
+                raise ValueError("This email is already registered.")
+            elif "WEAK_PASSWORD" in error_msg:
+                raise ValueError("Password should be at least 6 characters.")
+        except:
+            pass
+        raise ValueError("Signup failed. Please check your inputs.")
+
 
 def login(email, password):
-    user = auth.sign_in_with_email_and_password(email, password)
-    user_info = auth.get_account_info(user['idToken'])
-    uid = user_info['users'][0]['localId']
-    return {"email": email, "uid": uid}
+    try:
+        user = auth.sign_in_with_email_and_password(email, password)
+        user_info = auth.get_account_info(user['idToken'])
+        uid = user_info['users'][0]['localId']
+        return {"email": email, "uid": uid}
+    except Exception as e:
+        try:
+            error_msg = e.args[1]
+            if "INVALID_LOGIN_CREDENTIALS" in error_msg or "EMAIL_NOT_FOUND" in error_msg:
+                raise ValueError("Wrong email or password.")
+        except:
+            pass
+        raise ValueError("Login failed. Please try again.")
 
 def log_prompt_to_firebase(email, prompt, response, meta, chain_steps=None, uid=None):
     try:
@@ -35,6 +56,8 @@ def log_prompt_to_firebase(email, prompt, response, meta, chain_steps=None, uid=
             "intent":       meta.get("intent"),
             "temperature":  meta.get("temperature"),
             "max_tokens":   meta.get("max_tokens"),
+            "rating":       meta.get("rating"),    
+            "feedback":     meta.get("feedback")
         }
 
         if meta.get("rating") is not None:
