@@ -130,14 +130,16 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
         st.session_state["intent"] = ""
         st.session_state["last_response"] = ""
         st.session_state["full_prompt"] = ""
-        st.session_state["example_count"] = 0
+       
 
-        if "example_count" in st.session_state:
-            del st.session_state["example_count"]
+
         # Clear few-shot examples
         for key in list(st.session_state.keys()):
             if key.startswith("ex_input_") or key.startswith("ex_output_"):
                 del st.session_state[key]
+        
+        if "example_count" in st.session_state:
+            del st.session_state["example_count"]
 
         st.session_state["clear_prompt"] = False
         st.rerun()
@@ -213,7 +215,8 @@ with st.expander("🧠 AutoPrompt Builder", expanded=False):
     # Show AI Response
     if st.session_state.get("last_response"):
         st.subheader("🧠 AI Response:")
-        st.write(st.session_state["last_response"])
+        st.text_area("🧠 AI Response:", value=st.session_state["last_response"], height=400, key="live_prompt_response")
+
 
         st.markdown("### 📌 Generated Prompt Sent to AI:")
         st.code(st.session_state["full_prompt"], language='markdown')
@@ -555,6 +558,10 @@ if st.session_state.show_history:
     # 🔍 No History Case
     if not st.session_state.prompt_logs and not st.session_state.chain_logs:
         st.info("No history found.")
+
+
+
+
 
 
 
