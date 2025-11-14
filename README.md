@@ -71,10 +71,10 @@ Instant prompt generation using the Cohere LLM.
 | -------------- | -------------------------------- |
 | Frontend       | Streamlit                        |
 | Backend        | Python                           |
-| Database       | Firebase Firestore / Realtime DB |
+| Database       | Firebase Realtime DB |
 | Authentication | Firebase Auth                    |
 | AI Model       | Cohere API                       |
-| Deployment     | Render                           |
+
 
 ---
 
