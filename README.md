@@ -135,12 +135,12 @@ streamlit run app.py
 ## 📸 Screenshots
 
 ### **1️⃣ Login & Main Dashboard**
-
-**Login / Auto Page**  
-![Auto](screenshots/Auto.png)
+**Login Page**  
+![Login](screenshots/Auto.png)
 
 **Dashboard**  
 ![Dashboard](screenshots/dashboard.png)
+
 ---
 
 ### **2️⃣ Template & Input Interface**
@@ -148,7 +148,7 @@ streamlit run app.py
 ![Template Editor](screenshots/template%20editor.png)
 
 **Input Fields**  
-![Input Field](screenshots/input%20field.png)
+![Input Fields](screenshots/input%20field.png)
 
 **Few-Shot Examples**  
 ![Few Shot](screenshots/few%20shot.png)
@@ -157,7 +157,7 @@ streamlit run app.py
 
 ### **3️⃣ Prompt Chaining System**
 **Chaining Workflow**  
-![Chaining](screenshots/chaining.png)
+![Chaining Workflow](screenshots/chaining.png)
 
 **Chaining History**  
 ![Chaining History](screenshots/chaininghistory.png)
@@ -169,12 +169,13 @@ streamlit run app.py
 ![Single History](screenshots/singlehistory.png)
 
 **Full History**  
-![History](screenshots/history.png)
+![Full History](screenshots/history.png)
 
 ---
 
 ### **5️⃣ Firebase Database View**
 ![Database](screenshots/database.png)
+
 ---
 ## 📂 Project Structure
 
