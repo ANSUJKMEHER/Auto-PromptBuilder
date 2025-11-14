@@ -136,7 +136,7 @@ streamlit run app.py
 
 ### **1️⃣ Login & Main Dashboard**
 **Login Page**  
-![Login](screenshots/Auto.png)
+![Login Page](screenshots/login.png)
 
 **Dashboard**  
 ![Dashboard](screenshots/dashboard.png)
@@ -145,7 +145,7 @@ streamlit run app.py
 
 ### **2️⃣ Template & Input Interface**
 **Template Editor**  
-![Template Editor](screenshots/template%20editor.png)
+![Template Editor](screenshots/template.png)
 
 **Input Fields**  
 ![Input Fields](screenshots/input%20field.png)
@@ -166,7 +166,7 @@ streamlit run app.py
 
 ### **4️⃣ Response History**
 **Single Prompt History**  
-![Single History](screenshots/singlehistory.png)
+![Single Prompt History](screenshots/singlehistory.png)
 
 **Full History**  
 ![Full History](screenshots/history.png)
