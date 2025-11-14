@@ -7,3 +7,4 @@ firebase_config = {
     "messagingSenderId": "1032827288678",
     "appId": "1:1032827288678:web:8da1bf5d63d1c4e164c1a7"
 }
+# This file stores Firebase configuration settings

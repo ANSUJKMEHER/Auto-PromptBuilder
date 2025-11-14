@@ -9,3 +9,4 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY", "RlQjCIFvOkgZr3JT2mUiEe33MMB8ZyTY6T
 # ─── Apply to environment (optional; for local testing) ───
 os.environ["COHERE_API_KEY"] = COHERE_API_KEY
 # os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+#config

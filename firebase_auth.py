@@ -87,3 +87,4 @@ def update_feedback_in_firebase(user_id, log_key, rating=None, feedback=None):
     except Exception as e:
         print(f"[Firebase Feedback Update Error]: {e}")
         traceback.print_exc()
+#auth.py

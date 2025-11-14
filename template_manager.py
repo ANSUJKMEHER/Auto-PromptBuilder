@@ -22,3 +22,4 @@ def load_templates(user_id=None):
                 templates[file.split(".")[0]] = json.load(f)
 
     return templates
+#template_manager.py
