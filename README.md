@@ -135,12 +135,12 @@ streamlit run app.py
 ## 📸 Screenshots
 
 ### **1️⃣ Login & Main Dashboard**
-**Dashboard**  
-![Dashboard](screenshots/dashboard.png)
 
 **Login / Auto Page**  
 ![Auto](screenshots/Auto.png)
 
+**Dashboard**  
+![Dashboard](screenshots/dashboard.png)
 ---
 
 ### **2️⃣ Template & Input Interface**
