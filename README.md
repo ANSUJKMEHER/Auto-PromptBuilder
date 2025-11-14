@@ -132,44 +132,49 @@ streamlit run app.py
 9. Views full prompt history stored in Firebase
 
 ---
+## 📸 Screenshots
+
+### **1️⃣ Login & Main Dashboard**
+**Dashboard**  
+![Dashboard](screenshots/dashboard.png)
+
+**Login / Auto Page**  
+![Auto](screenshots/Auto.png)
+
 ---
-📸 Screenshots
-1️⃣ Login & Main Dashboard
 
-Dashboard
+### **2️⃣ Template & Input Interface**
+**Template Editor**  
+![Template Editor](screenshots/template%20editor.png)
 
+**Input Fields**  
+![Input Field](screenshots/input%20field.png)
 
-Login / Auto Page
+**Few-Shot Examples**  
+![Few Shot](screenshots/few%20shot.png)
 
+---
 
-2️⃣ Template & Input Interface
+### **3️⃣ Prompt Chaining System**
+**Chaining Workflow**  
+![Chaining](screenshots/chaining.png)
 
-Template Editor
+**Chaining History**  
+![Chaining History](screenshots/chaininghistory.png)
 
+---
 
-Input Fields
+### **4️⃣ Response History**
+**Single Prompt History**  
+![Single History](screenshots/singlehistory.png)
 
+**Full History**  
+![History](screenshots/history.png)
 
-Few-Shot Examples
+---
 
-
-3️⃣ Prompt Chaining System
-
-Chaining Workflow
-
-
-Chaining History
-
-
-4️⃣ Response History
-
-Single Prompt History
-
-
-Full History
-
-
-5️⃣ Firebase Database View
+### **5️⃣ Firebase Database View**
+![Database](screenshots/database.png)
 ---
 ## 📂 Project Structure
 
